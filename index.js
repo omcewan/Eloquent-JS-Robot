@@ -35,8 +35,48 @@ function buildGraph(edges) {
     addEdge(from, to);
     addEdge(to, from);
   }
-  console.log(graph);
+  // console.log(graph);
   return graph;
 }
 
 const roadGraph = buildGraph(roads);
+console.log(roadGraph);
+
+class VillageState {
+  constructor(place, parcels) {
+    this.place = place;
+    this.parcels = parcels;
+  }
+
+  move(destination) {
+    // check if the place that you are currently at does not include the destination
+    if (!roadGraph[this.place].includes(destination)) {
+      return this;
+    } else {
+      // the map will return an array that check the place for each parcel and if return the array for the places that are not equal to this.place. The current location of the robot
+      let parcels = this.parcels
+        .map((p) => {
+          if (p.place != this.place) return p;
+          return { place: destination, address: p.address };
+        })
+        .filter((p) => p.place != p.address);
+      return new VillageState(destination, parcels);
+    }
+  }
+}
+
+let first = new VillageState('Post Office', [
+  { place: 'Post Office', address: "Alice's House" },
+]);
+
+console.log(first.place, first.parcels)
+
+let next = first.move("Alice's House");
+
+console.log(next.place);
+// → Alice's House
+console.log(next.parcels);
+// → []
+console.log(first.place);
+// → Post Office
+console.log(next.destination)
