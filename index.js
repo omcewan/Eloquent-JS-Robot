@@ -169,46 +169,87 @@ function goalOrientedRobot({ place, parcels }, route) {
 
 function countSteps(state, robot, memory) {
   for (let steps = 0; ; steps++) {
-    if(state.parcels.length == 0) return steps
+    if (state.parcels.length == 0) return steps;
     let action = robot(state, memory);
     state = state.move(action.direction);
-    memory = action.memory
+    memory = action.memory;
   }
 }
 
 function compareRobots(robot1, memory1, robot2, memory2) {
-  let total1 = 0, total2 = 0;
+  let total1 = 0,
+    total2 = 0;
   for (let i = 0; i < 100; i++) {
-    let state = VillageState.random()
-    total1 += countSteps(state, robot1, memory1)
-    total2 += countSteps(state, robot2, memory2)
+    let state = VillageState.random();
+    total1 += countSteps(state, robot1, memory1);
+    total2 += countSteps(state, robot2, memory2);
   }
-  console.log(`Robot One took ${total1/100} and Robot Two took ${total2/100}`)
+  console.log(
+    `Robot One took ${total1 / 100} and Robot Two took ${total2 / 100}`
+  );
 }
 
-function lazyRobot({place, parcels}, route) {
+function lazyRobot({ place, parcels }, route) {
   if (route.length == 0) {
     // Describe a route for every parcel
-    let routes = parcels.map(parcel => {
+    let routes = parcels.map((parcel) => {
       if (parcel.place != place) {
-        return {route: findRoute(roadGraph, place, parcel.place),
-                pickUp: true};
+        return {
+          route: findRoute(roadGraph, place, parcel.place),
+          pickUp: true,
+        };
       } else {
-        return {route: findRoute(roadGraph, place, parcel.address),
-                pickUp: false};
+        return {
+          route: findRoute(roadGraph, place, parcel.address),
+          pickUp: false,
+        };
       }
     });
 
     // This determines the precedence a route gets when choosing.
     // Route length counts negatively, routes that pick up a package
     // get a small bonus.
-    function score({route, pickUp}) {
+    function score({ route, pickUp }) {
       return (pickUp ? 0.5 : 0) - route.length;
     }
-    route = routes.reduce((a, b) => score(a) > score(b) ? a : b).route;
+    route = routes.reduce((a, b) => (score(a) > score(b) ? a : b)).route;
   }
 
-  return {direction: route[0], memory: route.slice(1)};
+  return { direction: route[0], memory: route.slice(1) };
 }
 
-compareRobots(lazyRobot, [], goalOrientedRobot, [])
+compareRobots(lazyRobot, [], goalOrientedRobot, []);
+
+class PGroup {
+  constructor(values) {
+    this.values = values;
+  }
+
+  add(value) {
+    if (this.has(value)) return this;
+    // return new PGroup(this.values.concat([value]))
+    return new PGroup([...this.values, value]);
+  }
+
+  delete(value) {
+    if (!this.has(value)) return this;
+    return new PGroup(this.values.filter((element) => element !== value));
+  }
+
+  has(value) {
+    return this.values.includes(value);
+  }
+}
+
+PGroup.empty = new PGroup([]);
+
+let a = PGroup.empty.add("a");
+let ab = a.add("b");
+let b = ab.delete("a");
+
+console.log(b.has("b"));
+// → true 
+console.log(a.has("b"));
+// → false
+console.log(b.has("a"));
+// → false
